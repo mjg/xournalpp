@@ -53,7 +53,8 @@ void checkForErrorlog();
 void checkForEmergencySave(Control* control);
 
 auto exportPdf(const char* input, const char* output, const char* range) -> int;
-auto exportImg(const char* input, const char* output, const char* range) -> int;
+auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth,
+               int pngHeight) -> int;
 
 void initResourcePath(GladeSearchpath* gladePath, const gchar* relativePathAndFile, bool failIfNotFound = true);
 
@@ -225,11 +226,17 @@ void checkForEmergencySave(Control* control) {
     gtk_widget_destroy(dialog);
 }
 
-auto exportImg(const char* input, const char* output, const char* range) -> int {
-/*  input: path to the input file
- *  output: path to the output file(s)
- *  range: page range to be parsed. If range=nullptr, exports the whole file
- */
+auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth,
+               int pngHeight) -> int {
+    /*  input: path to the input file
+     *  output: path to the output file(s)
+     *  range: page range to be parsed. If range=nullptr, exports the whole file
+     *  pngDpi: set dpi for Png files. Non positive values are ignored
+     *  pngWidth: set the width for Png files. Non positive values are ignored
+     *  pngHeight: set the height for Png files. Non positive values are ignored
+     *
+     *  The priority is: pngDpi overwrites pngWidth overwrites pngHeight
+     */
     LoadHandler loader;
 
     Document* doc = loader.loadDocument(input);
@@ -255,6 +262,17 @@ auto exportImg(const char* input, const char* output, const char* range) -> int 
     DummyProgressListener progress;
 
     ImageExport imgExport(doc, path, format, false, exportRange);
+
+    if (format == EXPORT_GRAPHICS_PNG) {
+        if (pngDpi > 0) {
+            imgExport.setPngDpi(pngDpi);
+        } else if (pngWidth > 0) {
+            imgExport.setPngWidthInPixels(pngWidth);
+        } else if (pngHeight > 0) {
+            imgExport.setPngHeightInPixels(pngHeight);
+        }
+    }
+
     imgExport.exportGraphics(&progress);
 
     for (PageRangeEntry* e: exportRange) {
@@ -338,6 +356,9 @@ struct XournalMainPrivate {
     gchar* rangeString{};
     gboolean showVersion = false;
     int openAtPageNumber = 0;  // when no --page is used, the document opens at the page specified in the metadata file
+    int exportPngDpi = -1;
+    int exportPngWidth = -1;
+    int exportPngHeight = -1;
     std::unique_ptr<GladeSearchpath> gladePath;
     std::unique_ptr<Control> control;
     std::unique_ptr<MainWindow> win;
@@ -546,7 +567,8 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
         return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->rangeString);
     }
     if (app_data->imgFilename && app_data->optFilename && *app_data->optFilename) {
-        return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->rangeString);
+        return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->rangeString,
+                         app_data->exportPngDpi, app_data->exportPngWidth, app_data->exportPngHeight);
     }
     return -1;
 }
@@ -577,6 +599,15 @@ auto XournalMain::run(int argc, char** argv) -> int {
                                        _("Image output filename (.png / .svg)"), nullptr},
                           GOptionEntry{"export-range", 0, 0, G_OPTION_ARG_STRING, &app_data.rangeString,
                                        _("Page range for export (e.g. \"2-3,5,7-\")"), nullptr},
+                          GOptionEntry{"export-png-dpi", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngDpi, 
+                                       _("Set DPI for PNG exports (only useful with --create-img=foo.png. "
+                                       "Default is 300)"), "N"},
+                          GOptionEntry{"export-png-width", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngWidth,
+                                       _("Set page width for PNG exports (only useful with --create-img=foo.png. "
+                                       "Unused if --export-png-dpi is set)"), "N"},
+                          GOptionEntry{"export-png-height", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngHeight,
+                                       _("Set page height for PNG exports (only useful with --create-img=foo.png. "
+                                       "Unused if either --export-png-dpi or --export-png-width is set.)"), "N"},
                           GOptionEntry{"page", 'n', 0, G_OPTION_ARG_INT, &app_data.openAtPageNumber,
                                        _("Jump to Page (first Page: 1)"), "N"},
                           GOptionEntry{G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &app_data.optFilename,

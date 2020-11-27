@@ -24,6 +24,16 @@ ImageExport::~ImageExport() = default;
 void ImageExport::setPngDpi(int dpi) { this->pngDpi = dpi; }
 
 /**
+ * PNG width in pixels
+ */
+void ImageExport::setPngWidthInPixels(int width) { this->pngWidthInPixels = width; }
+
+/**
+ * PNG height in pixels
+ */
+void ImageExport::setPngHeightInPixels(int height) { this->pngHeightInPixels = height; }
+
+/**
  * @return the last error message to show to the user
  */
 auto ImageExport::getLastErrorMsg() const -> string { return lastError; }
@@ -31,21 +41,31 @@ auto ImageExport::getLastErrorMsg() const -> string { return lastError; }
 /**
  * Create surface
  */
-void ImageExport::createSurface(double width, double height, int id) {
+auto ImageExport::createSurface(double width, double height, int id) -> double {
     if (format == EXPORT_GRAPHICS_PNG) {
-        this->surface =
-                cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width * this->pngDpi / Util::DPI_NORMALIZATION_FACTOR,
-                                           height * this->pngDpi / Util::DPI_NORMALIZATION_FACTOR);
+        double factor = 1.0;
+        if (this->pngWidthInPixels != -1) {
+            factor = this->pngWidthInPixels / width;
+            this->surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, this->pngWidthInPixels, height * factor);
+        } else if (this->pngHeightInPixels != -1) {
+            factor = this->pngHeightInPixels / height;
+            this->surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width * factor, this->pngHeightInPixels);
+        } else {
+            factor = this->pngDpi / Util::DPI_NORMALIZATION_FACTOR;
+            this->surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width * factor, height * factor);
+        }
         this->cr = cairo_create(this->surface);
-        double factor = this->pngDpi / Util::DPI_NORMALIZATION_FACTOR;
         cairo_scale(this->cr, factor, factor);
+        return factor;
     } else if (format == EXPORT_GRAPHICS_SVG) {
         auto filepath = getFilenameWithNumber(id);
         this->surface = cairo_svg_surface_create(filepath.u8string().c_str(), width, height);
         cairo_svg_surface_restrict_to_version(this->surface, CAIRO_SVG_VERSION_1_2);
         this->cr = cairo_create(this->surface);
+        return 1.0;
     } else {
         g_error("Unsupported graphics format: %i", format);
+        return 0.0;
     }
 }
 
@@ -85,12 +105,12 @@ auto ImageExport::getFilenameWithNumber(int no) const -> fs::path {
 /**
  * Export a single PNG page
  */
-void ImageExport::exportImagePage(int pageId, int id, double zoom, ExportGraphicsFormat format, DocumentView& view) {
+void ImageExport::exportImagePage(int pageId, int id, ExportGraphicsFormat format, DocumentView& view) {
     doc->lock();
     PageRef page = doc->getPage(pageId);
     doc->unlock();
 
-    createSurface(page->getWidth(), page->getHeight(), id);
+    double zoom = createSurface(page->getWidth(), page->getHeight(), id);
 
     cairo_status_t state = cairo_surface_status(this->surface);
     if (state != CAIRO_STATUS_SUCCESS) {
@@ -140,7 +160,7 @@ void ImageExport::exportGraphics(ProgressListener* stateListener) {
     stateListener->setMaximumState(selectedCount);
 
     DocumentView view;
-    double zoom = this->pngDpi / Util::DPI_NORMALIZATION_FACTOR;
+    //    double zoom = this->pngDpi / Util::DPI_NORMALIZATION_FACTOR;
     int current = 0;
 
     for (int i = 0; i < count; i++) {
@@ -152,7 +172,7 @@ void ImageExport::exportGraphics(ProgressListener* stateListener) {
         if (selectedPages[i]) {
             stateListener->setCurrentState(current++);
 
-            exportImagePage(i, id, zoom, format, view);
+            exportImagePage(i, id, format, view);
         }
     }
 }

@@ -40,6 +40,16 @@ public:
     void setPngDpi(int dpi);
 
     /**
+     * PNG width in pixels
+     */
+    void setPngWidthInPixels(int width);
+
+    /**
+     * PNG height in pixels
+     */
+    void setPngHeightInPixels(int height);
+
+    /**
      * @return The last error message to show to the user
      */
     string getLastErrorMsg() const;
@@ -53,7 +63,7 @@ private:
     /**
      * Create surface
      */
-    void createSurface(double width, double height, int id);
+    double createSurface(double width, double height, int id);
 
     /**
      * Free / store the surface
@@ -68,7 +78,7 @@ private:
     /**
      * Export a single Image page
      */
-    void exportImagePage(int pageId, int id, double zoom, ExportGraphicsFormat format, DocumentView& view);
+    void exportImagePage(int pageId, int id, ExportGraphicsFormat format, DocumentView& view);
 
 public:
     /**
@@ -100,6 +110,16 @@ public:
      * PNG dpi
      */
     int pngDpi = 300;
+
+    /**
+     * PNG width in pixels
+     */
+    int pngWidthInPixels = -1;
+
+    /**
+     * PNG height in pixels
+     */
+    int pngHeightInPixels = -1;
 
     /**
      * Export surface

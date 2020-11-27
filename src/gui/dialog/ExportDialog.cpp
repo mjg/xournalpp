@@ -51,7 +51,7 @@ auto ExportDialog::getRange() -> PageRangeVector {
     GtkWidget* rdRangePages = get("rdRangePages");
 
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rdRangePages))) {
-        return PageRange::parse(gtk_entry_get_text(GTK_ENTRY(get("txtPages"))), this-> pageCount);
+        return PageRange::parse(gtk_entry_get_text(GTK_ENTRY(get("txtPages"))), this->pageCount);
     }
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rdRangeCurrent))) {
         PageRangeVector range;
