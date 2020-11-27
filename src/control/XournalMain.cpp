@@ -52,8 +52,8 @@ auto migrateSettings() -> MigrateResult;
 void checkForErrorlog();
 void checkForEmergencySave(Control* control);
 
-auto exportPdf(const char* input, const char* output) -> int;
-auto exportImg(const char* input, const char* output) -> int;
+auto exportPdf(const char* input, const char* output, const char* range) -> int;
+auto exportImg(const char* input, const char* output, const char* range) -> int;
 
 void initResourcePath(GladeSearchpath* gladePath, const gchar* relativePathAndFile, bool failIfNotFound = true);
 
@@ -225,7 +225,11 @@ void checkForEmergencySave(Control* control) {
     gtk_widget_destroy(dialog);
 }
 
-auto exportImg(const char* input, const char* output) -> int {
+auto exportImg(const char* input, const char* output, const char* range) -> int {
+/*  input: path to the input file
+ *  output: path to the output file(s)
+ *  range: page range to be parsed. If range=nullptr, exports the whole file
+ */
     LoadHandler loader;
 
     Document* doc = loader.loadDocument(input);
@@ -242,7 +246,12 @@ auto exportImg(const char* input, const char* output) -> int {
     }
 
     PageRangeVector exportRange;
-    exportRange.push_back(new PageRangeEntry(0, int(doc->getPageCount() - 1)));
+    if (range) {
+        exportRange = PageRange::parse(range, int(doc->getPageCount()));
+    } else {
+        exportRange.push_back(new PageRangeEntry(0, int(doc->getPageCount() - 1)));
+    }
+
     DummyProgressListener progress;
 
     ImageExport imgExport(doc, path, format, false, exportRange);
@@ -263,7 +272,11 @@ auto exportImg(const char* input, const char* output) -> int {
     return 0;  // no error
 }
 
-auto exportPdf(const char* input, const char* output) -> int {
+auto exportPdf(const char* input, const char* output, const char* range) -> int {
+    /*  input: path to the input file
+     *  output: path to the output file(s)
+     *  range: page range to be parsed. If range=nullptr, exports the whole file
+     */
     LoadHandler loader;
 
     Document* doc = loader.loadDocument(input);
@@ -279,7 +292,23 @@ auto exportPdf(const char* input, const char* output) -> int {
     g_free(cpath);
     g_object_unref(file);
 
-    if (!pdfe->createPdf(path)) {
+    bool exportSuccess;  // Return of the export job
+
+    if (range) {
+        // Parse the range
+        PageRangeVector exportRange = PageRange::parse(range, doc->getPageCount());
+        // Do the export
+        exportSuccess = pdfe->createPdf(path, exportRange);
+        // Clean up
+        for (PageRangeEntry* e: exportRange) {
+            delete e;
+        }
+        exportRange.clear();
+    } else {
+        exportSuccess = pdfe->createPdf(path);
+    }
+
+    if (!exportSuccess) {
         g_error("%s", pdfe->getLastError().c_str());
         // delete pdfe; Unreachable. Todo: use std::unique_ptr
     }
@@ -306,6 +335,7 @@ struct XournalMainPrivate {
     gchar** optFilename{};
     gchar* pdfFilename{};
     gchar* imgFilename{};
+    gchar* rangeString{};
     gboolean showVersion = false;
     int openAtPageNumber = 0;  // when no --page is used, the document opens at the page specified in the metadata file
     std::unique_ptr<GladeSearchpath> gladePath;
@@ -513,10 +543,10 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
     }
 
     if (app_data->pdfFilename && app_data->optFilename && *app_data->optFilename) {
-        return exportPdf(*app_data->optFilename, app_data->pdfFilename);
+        return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->rangeString);
     }
     if (app_data->imgFilename && app_data->optFilename && *app_data->optFilename) {
-        return exportImg(*app_data->optFilename, app_data->imgFilename);
+        return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->rangeString);
     }
     return -1;
 }
@@ -545,6 +575,8 @@ auto XournalMain::run(int argc, char** argv) -> int {
                                        _("PDF output filename"), nullptr},
                           GOptionEntry{"create-img", 'i', 0, G_OPTION_ARG_FILENAME, &app_data.imgFilename,
                                        _("Image output filename (.png / .svg)"), nullptr},
+                          GOptionEntry{"export-range", 0, 0, G_OPTION_ARG_STRING, &app_data.rangeString,
+                                       _("Page range for export (e.g. \"2-3,5,7-\")"), nullptr},
                           GOptionEntry{"page", 'n', 0, G_OPTION_ARG_INT, &app_data.openAtPageNumber,
                                        _("Jump to Page (first Page: 1)"), "N"},
                           GOptionEntry{G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &app_data.optFilename,
