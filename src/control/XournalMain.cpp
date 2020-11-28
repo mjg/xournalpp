@@ -353,9 +353,9 @@ struct XournalMainPrivate {
     gchar** optFilename{};
     gchar* pdfFilename{};
     gchar* imgFilename{};
-    gchar* rangeString{};
     gboolean showVersion = false;
     int openAtPageNumber = 0;  // when no --page is used, the document opens at the page specified in the metadata file
+    gchar* exportRange{};
     int exportPngDpi = -1;
     int exportPngWidth = -1;
     int exportPngHeight = -1;
@@ -564,10 +564,10 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
     }
 
     if (app_data->pdfFilename && app_data->optFilename && *app_data->optFilename) {
-        return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->rangeString);
+        return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->exportRange);
     }
     if (app_data->imgFilename && app_data->optFilename && *app_data->optFilename) {
-        return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->rangeString,
+        return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->exportRange,
                          app_data->exportPngDpi, app_data->exportPngWidth, app_data->exportPngHeight);
     }
     return -1;
@@ -593,22 +593,7 @@ auto XournalMain::run(int argc, char** argv) -> int {
     g_signal_connect(app, "shutdown", G_CALLBACK(&on_shutdown), &app_data);
     g_signal_connect(app, "handle-local-options", G_CALLBACK(&on_handle_local_options), &app_data);
 
-    std::array options = {GOptionEntry{"create-pdf", 'p', 0, G_OPTION_ARG_FILENAME, &app_data.pdfFilename,
-                                       _("PDF output filename"), nullptr},
-                          GOptionEntry{"create-img", 'i', 0, G_OPTION_ARG_FILENAME, &app_data.imgFilename,
-                                       _("Image output filename (.png / .svg)"), nullptr},
-                          GOptionEntry{"export-range", 0, 0, G_OPTION_ARG_STRING, &app_data.rangeString,
-                                       _("Page range for export (e.g. \"2-3,5,7-\")"), nullptr},
-                          GOptionEntry{"export-png-dpi", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngDpi, 
-                                       _("Set DPI for PNG exports (only useful with --create-img=foo.png. "
-                                       "Default is 300)"), "N"},
-                          GOptionEntry{"export-png-width", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngWidth,
-                                       _("Set page width for PNG exports (only useful with --create-img=foo.png. "
-                                       "Unused if --export-png-dpi is set)"), "N"},
-                          GOptionEntry{"export-png-height", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngHeight,
-                                       _("Set page height for PNG exports (only useful with --create-img=foo.png. "
-                                       "Unused if either --export-png-dpi or --export-png-width is set.)"), "N"},
-                          GOptionEntry{"page", 'n', 0, G_OPTION_ARG_INT, &app_data.openAtPageNumber,
+    std::array options = {GOptionEntry{"page", 'n', 0, G_OPTION_ARG_INT, &app_data.openAtPageNumber,
                                        _("Jump to Page (first Page: 1)"), "N"},
                           GOptionEntry{G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &app_data.optFilename,
                                        "<input>", nullptr},
@@ -616,6 +601,32 @@ auto XournalMain::run(int argc, char** argv) -> int {
                                        _("Get version of xournalpp"), nullptr},
                           GOptionEntry{nullptr}};  // Must be terminated by a nullptr. See gtk doc
     g_application_add_main_option_entries(G_APPLICATION(app), options.data());
+    
+    std::array exportOptions = {GOptionEntry{"create-pdf", 'p', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_FILENAME, &app_data.pdfFilename,
+                                            _("Export FILE as PDF"), "OUTPUTFILE"},
+                                GOptionEntry{"create-img", 'i', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_FILENAME, &app_data.imgFilename,
+                                    _("Export FILE as image files (one per page)\n"
+                                    "\t\tAutodectect the output format from the extension of IMGFILE\n"
+                                    "\t\tSupported formats: .png, .svg"), "OUTPUTFILE"},
+                                GOptionEntry{"export-range", 0, 0, G_OPTION_ARG_STRING, &app_data.exportRange,
+                                    _("Only export the pages specified by RANGE (e.g. \"2-3,5,7-\")\n"
+                                    "\t\tNo effect without -p/--create-pdf or -i/--create-img"), nullptr},
+                                GOptionEntry{"export-png-dpi", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngDpi, 
+                                    _("Set DPI for PNG exports. Default is 300\n"
+                                    "\t\tNo effect without -i/--create-img=foo.png"), "N"},
+                                GOptionEntry{"export-png-width", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngWidth,
+                                    _("Set page width for PNG exports\n"
+                                    "\t\tNo effect without -i/--create-img=foo.png\n"
+                                    "\t\tIgnored if --export-png-dpi is used"), "N"},
+                                GOptionEntry{"export-png-height", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngHeight,
+                                    _("Set page height for PNG exports\n"
+                                    "\t\tNo effect without -i/--create-img=foo.png\n"
+                                    "\t\tIgnored if --export-png-dpi or --export-png-width is used"), "N"},
+                                GOptionEntry{nullptr}};  // Must be terminated by a nullptr. See gtk doc
+    GOptionGroup* exportGroup = g_option_group_new("export", _("Advanced export options"), _("Display advanced export options"), nullptr, nullptr);
+    g_option_group_add_entries(exportGroup, exportOptions.data());
+    g_application_add_option_group(G_APPLICATION(app), exportGroup);
+    
     auto rv = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
     return rv;
