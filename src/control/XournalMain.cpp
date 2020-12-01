@@ -52,9 +52,9 @@ auto migrateSettings() -> MigrateResult;
 void checkForErrorlog();
 void checkForEmergencySave(Control* control);
 
-auto exportPdf(const char* input, const char* output, const char* range) -> int;
-auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth, int pngHeight)
-        -> int;
+auto exportPdf(const char* input, const char* output, const char* range, bool noBackground) -> int;
+auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth, int pngHeight,
+               bool noBackground) -> int;
 
 void initResourcePath(GladeSearchpath* gladePath, const gchar* relativePathAndFile, bool failIfNotFound = true);
 
@@ -234,13 +234,14 @@ void checkForEmergencySave(Control* control) {
  * @param pngDpi Set dpi for Png files. Non positive values are ignored
  * @param pngWidth Set the width for Png files. Non positive values are ignored
  * @param pngHeight Set the height for Png files. Non positive values are ignored
+ * @param noBackground If true, the exported image file has transparent background
  *
  *  The priority is: pngDpi overwrites pngWidth overwrites pngHeight
  *
  * @return 0 on success, -2 on failure opening the input file, -3 on export failure
  */
-auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth, int pngHeight)
-        -> int {
+auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth, int pngHeight,
+               bool noBackground) -> int {
     LoadHandler loader;
 
     Document* doc = loader.loadDocument(input);
@@ -265,7 +266,7 @@ auto exportImg(const char* input, const char* output, const char* range, int png
 
     DummyProgressListener progress;
 
-    ImageExport imgExport(doc, path, format, false, exportRange);
+    ImageExport imgExport(doc, path, format, noBackground, exportRange);
 
     if (format == EXPORT_GRAPHICS_PNG) {
         if (pngDpi > 0) {
@@ -299,10 +300,11 @@ auto exportImg(const char* input, const char* output, const char* range, int png
  * @param input Path to the input file
  * @param output Path to the output file
  * @param range Page range to be parsed. If range=nullptr, exports the whole file
+ * @param noBackground If true, the exported pdf file has white background
  *
  * @return 0 on success, -2 on failure opening the input file, -3 on export failure
  */
-auto exportPdf(const char* input, const char* output, const char* range) -> int {
+auto exportPdf(const char* input, const char* output, const char* range, bool noBackground) -> int {
     LoadHandler loader;
 
     Document* doc = loader.loadDocument(input);
@@ -313,6 +315,7 @@ auto exportPdf(const char* input, const char* output, const char* range) -> int 
     GFile* file = g_file_new_for_commandline_arg(output);
 
     XojPdfExport* pdfe = XojPdfExportFactory::createExport(doc, nullptr);
+    pdfe->setNoBackgroundExport(noBackground);
     char* cpath = g_file_get_path(file);
     string path = cpath;
     g_free(cpath);
@@ -367,6 +370,7 @@ struct XournalMainPrivate {
     int exportPngDpi = -1;
     int exportPngWidth = -1;
     int exportPngHeight = -1;
+    bool exportNoBackground = false;
     std::unique_ptr<GladeSearchpath> gladePath;
     std::unique_ptr<Control> control;
     std::unique_ptr<MainWindow> win;
@@ -572,11 +576,12 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
     }
 
     if (app_data->pdfFilename && app_data->optFilename && *app_data->optFilename) {
-        return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->exportRange);
+        return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->exportRange,
+                         app_data->exportNoBackground);
     }
     if (app_data->imgFilename && app_data->optFilename && *app_data->optFilename) {
         return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->exportRange, app_data->exportPngDpi,
-                         app_data->exportPngWidth, app_data->exportPngHeight);
+                         app_data->exportPngWidth, app_data->exportPngHeight, app_data->exportNoBackground);
     }
     return -1;
 }
@@ -615,30 +620,36 @@ auto XournalMain::run(int argc, char** argv) -> int {
      */
     std::array exportOptions = {
             GOptionEntry{"create-pdf", 'p', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_FILENAME, &app_data.pdfFilename,
-                         _("Export FILE as PDF"), "OUTPUTFILE"},
+                         _("Export FILE as PDF"), "PDFFILE"},
             GOptionEntry{"create-img", 'i', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_FILENAME, &app_data.imgFilename,
                          _("Export FILE as image files (one per page)\n"
-                           "\t\tAutodectect the output format from the extension of IMGFILE\n"
-                           "\t\tSupported formats: .png, .svg"),
-                         "OUTPUTFILE"},
+                           "                                 Guess the output format from the extension of IMGFILE\n"
+                           "                                 Supported formats: .png, .svg"),
+                         "IMGFILE"},
+            GOptionEntry{"export-no-background", 0, 0, G_OPTION_ARG_NONE, &app_data.exportNoBackground,
+                         _("Export without background\n"
+                           "                                 The exported file has transparent or white background,\n"
+                           "                                 depending on what its format supports\n"),
+                         0},
             GOptionEntry{"export-range", 0, 0, G_OPTION_ARG_STRING, &app_data.exportRange,
                          _("Only export the pages specified by RANGE (e.g. \"2-3,5,7-\")\n"
-                           "\t\tNo effect without -p/--create-pdf or -i/--create-img"),
+                           "                                 No effect without -p/--create-pdf or -i/--create-img"),
                          nullptr},
             GOptionEntry{"export-png-dpi", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngDpi,
                          _("Set DPI for PNG exports. Default is 300\n"
-                           "\t\tNo effect without -i/--create-img=foo.png"),
+                           "                                 No effect without -i/--create-img=foo.png"),
                          "N"},
             GOptionEntry{"export-png-width", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngWidth,
                          _("Set page width for PNG exports\n"
-                           "\t\tNo effect without -i/--create-img=foo.png\n"
-                           "\t\tIgnored if --export-png-dpi is used"),
+                           "                                 No effect without -i/--create-img=foo.png\n"
+                           "                                 Ignored if --export-png-dpi is used"),
                          "N"},
-            GOptionEntry{"export-png-height", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngHeight,
-                         _("Set page height for PNG exports\n"
-                           "\t\tNo effect without -i/--create-img=foo.png\n"
-                           "\t\tIgnored if --export-png-dpi or --export-png-width is used"),
-                         "N"},
+            GOptionEntry{
+                    "export-png-height", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngHeight,
+                    _("Set page height for PNG exports\n"
+                      "                                 No effect without -i/--create-img=foo.png\n"
+                      "                                 Ignored if --export-png-dpi or --export-png-width is used"),
+                      "N"},
             GOptionEntry{nullptr}};  // Must be terminated by a nullptr. See gtk doc
     GOptionGroup* exportGroup = g_option_group_new("export", _("Advanced export options"),
                                                    _("Display advanced export options"), nullptr, nullptr);
