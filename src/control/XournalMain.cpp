@@ -53,8 +53,8 @@ void checkForErrorlog();
 void checkForEmergencySave(Control* control);
 
 auto exportPdf(const char* input, const char* output, const char* range) -> int;
-auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth,
-               int pngHeight) -> int;
+auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth, int pngHeight)
+        -> int;
 
 void initResourcePath(GladeSearchpath* gladePath, const gchar* relativePathAndFile, bool failIfNotFound = true);
 
@@ -226,17 +226,21 @@ void checkForEmergencySave(Control* control) {
     gtk_widget_destroy(dialog);
 }
 
-auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth,
-               int pngHeight) -> int {
-    /*  input: path to the input file
-     *  output: path to the output file(s)
-     *  range: page range to be parsed. If range=nullptr, exports the whole file
-     *  pngDpi: set dpi for Png files. Non positive values are ignored
-     *  pngWidth: set the width for Png files. Non positive values are ignored
-     *  pngHeight: set the height for Png files. Non positive values are ignored
-     *
-     *  The priority is: pngDpi overwrites pngWidth overwrites pngHeight
-     */
+/**
+ * @brief Export the input file as a bunch of image files (one per page)
+ * @param input Path to the input file
+ * @param output Path to the output file(s)
+ * @param range Page range to be parsed. If range=nullptr, exports the whole file
+ * @param pngDpi Set dpi for Png files. Non positive values are ignored
+ * @param pngWidth Set the width for Png files. Non positive values are ignored
+ * @param pngHeight Set the height for Png files. Non positive values are ignored
+ *
+ *  The priority is: pngDpi overwrites pngWidth overwrites pngHeight
+ *
+ * @return 0 on success, -2 on failure opening the input file, -3 on export failure
+ */
+auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth, int pngHeight)
+        -> int {
     LoadHandler loader;
 
     Document* doc = loader.loadDocument(input);
@@ -265,11 +269,11 @@ auto exportImg(const char* input, const char* output, const char* range, int png
 
     if (format == EXPORT_GRAPHICS_PNG) {
         if (pngDpi > 0) {
-            imgExport.setPngDpi(pngDpi);
+            imgExport.setQualityParameter(EXPORT_QUALITY_DPI, pngDpi);
         } else if (pngWidth > 0) {
-            imgExport.setPngWidthInPixels(pngWidth);
+            imgExport.setQualityParameter(EXPORT_QUALITY_WIDTH, pngWidth);
         } else if (pngHeight > 0) {
-            imgExport.setPngHeightInPixels(pngHeight);
+            imgExport.setQualityParameter(EXPORT_QUALITY_HEIGHT, pngHeight);
         }
     }
 
@@ -290,11 +294,15 @@ auto exportImg(const char* input, const char* output, const char* range, int png
     return 0;  // no error
 }
 
+/**
+ * @brief Export the input file as pdf
+ * @param input Path to the input file
+ * @param output Path to the output file
+ * @param range Page range to be parsed. If range=nullptr, exports the whole file
+ *
+ * @return 0 on success, -2 on failure opening the input file, -3 on export failure
+ */
 auto exportPdf(const char* input, const char* output, const char* range) -> int {
-    /*  input: path to the input file
-     *  output: path to the output file(s)
-     *  range: page range to be parsed. If range=nullptr, exports the whole file
-     */
     LoadHandler loader;
 
     Document* doc = loader.loadDocument(input);
@@ -567,8 +575,8 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
         return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->exportRange);
     }
     if (app_data->imgFilename && app_data->optFilename && *app_data->optFilename) {
-        return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->exportRange,
-                         app_data->exportPngDpi, app_data->exportPngWidth, app_data->exportPngHeight);
+        return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->exportRange, app_data->exportPngDpi,
+                         app_data->exportPngWidth, app_data->exportPngHeight);
     }
     return -1;
 }
@@ -601,32 +609,42 @@ auto XournalMain::run(int argc, char** argv) -> int {
                                        _("Get version of xournalpp"), nullptr},
                           GOptionEntry{nullptr}};  // Must be terminated by a nullptr. See gtk doc
     g_application_add_main_option_entries(G_APPLICATION(app), options.data());
-    
-    std::array exportOptions = {GOptionEntry{"create-pdf", 'p', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_FILENAME, &app_data.pdfFilename,
-                                            _("Export FILE as PDF"), "OUTPUTFILE"},
-                                GOptionEntry{"create-img", 'i', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_FILENAME, &app_data.imgFilename,
-                                    _("Export FILE as image files (one per page)\n"
-                                    "\t\tAutodectect the output format from the extension of IMGFILE\n"
-                                    "\t\tSupported formats: .png, .svg"), "OUTPUTFILE"},
-                                GOptionEntry{"export-range", 0, 0, G_OPTION_ARG_STRING, &app_data.exportRange,
-                                    _("Only export the pages specified by RANGE (e.g. \"2-3,5,7-\")\n"
-                                    "\t\tNo effect without -p/--create-pdf or -i/--create-img"), nullptr},
-                                GOptionEntry{"export-png-dpi", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngDpi, 
-                                    _("Set DPI for PNG exports. Default is 300\n"
-                                    "\t\tNo effect without -i/--create-img=foo.png"), "N"},
-                                GOptionEntry{"export-png-width", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngWidth,
-                                    _("Set page width for PNG exports\n"
-                                    "\t\tNo effect without -i/--create-img=foo.png\n"
-                                    "\t\tIgnored if --export-png-dpi is used"), "N"},
-                                GOptionEntry{"export-png-height", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngHeight,
-                                    _("Set page height for PNG exports\n"
-                                    "\t\tNo effect without -i/--create-img=foo.png\n"
-                                    "\t\tIgnored if --export-png-dpi or --export-png-width is used"), "N"},
-                                GOptionEntry{nullptr}};  // Must be terminated by a nullptr. See gtk doc
-    GOptionGroup* exportGroup = g_option_group_new("export", _("Advanced export options"), _("Display advanced export options"), nullptr, nullptr);
+
+    /**
+     * Export related options
+     */
+    std::array exportOptions = {
+            GOptionEntry{"create-pdf", 'p', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_FILENAME, &app_data.pdfFilename,
+                         _("Export FILE as PDF"), "OUTPUTFILE"},
+            GOptionEntry{"create-img", 'i', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_FILENAME, &app_data.imgFilename,
+                         _("Export FILE as image files (one per page)\n"
+                           "\t\tAutodectect the output format from the extension of IMGFILE\n"
+                           "\t\tSupported formats: .png, .svg"),
+                         "OUTPUTFILE"},
+            GOptionEntry{"export-range", 0, 0, G_OPTION_ARG_STRING, &app_data.exportRange,
+                         _("Only export the pages specified by RANGE (e.g. \"2-3,5,7-\")\n"
+                           "\t\tNo effect without -p/--create-pdf or -i/--create-img"),
+                         nullptr},
+            GOptionEntry{"export-png-dpi", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngDpi,
+                         _("Set DPI for PNG exports. Default is 300\n"
+                           "\t\tNo effect without -i/--create-img=foo.png"),
+                         "N"},
+            GOptionEntry{"export-png-width", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngWidth,
+                         _("Set page width for PNG exports\n"
+                           "\t\tNo effect without -i/--create-img=foo.png\n"
+                           "\t\tIgnored if --export-png-dpi is used"),
+                         "N"},
+            GOptionEntry{"export-png-height", 0, 0, G_OPTION_ARG_INT, &app_data.exportPngHeight,
+                         _("Set page height for PNG exports\n"
+                           "\t\tNo effect without -i/--create-img=foo.png\n"
+                           "\t\tIgnored if --export-png-dpi or --export-png-width is used"),
+                         "N"},
+            GOptionEntry{nullptr}};  // Must be terminated by a nullptr. See gtk doc
+    GOptionGroup* exportGroup = g_option_group_new("export", _("Advanced export options"),
+                                                   _("Display advanced export options"), nullptr, nullptr);
     g_option_group_add_entries(exportGroup, exportOptions.data());
     g_application_add_option_group(G_APPLICATION(app), exportGroup);
-    
+
     auto rv = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
     return rv;
