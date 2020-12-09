@@ -25,6 +25,7 @@
     * The new input system is now enabled by default (#1560). Should errors
       occur please file a bug report and deactivate it in the settings.
     * Reimplemented zoom gestures for better compatibility (#1528)
+    * Fixed instant maximum zoom, with disabled "pinching with zoom gestures" #2509
     * Added a `Mouse+Keyboard` device class for handling e.g. wireless USB
       mouse/keyboard receivers (#1769, #1785).
 * LaTeX
