@@ -10,3 +10,6 @@ XojPdfExport::~XojPdfExport() = default;
 void XojPdfExport::setNoBackgroundExport(bool noBackgroundExport) {
     // Does nothing in the base class
 }
+void XojPdfExport::setNoPaperExport(bool noPaperExport) {
+    // Does nothing in the base class
+}

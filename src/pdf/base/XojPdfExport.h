@@ -32,6 +32,7 @@ public:
      * Export without background
      */
     virtual void setNoBackgroundExport(bool noBackgroundExport);
+    virtual void setNoPaperExport(bool noPaperExport);
 
 private:
 };

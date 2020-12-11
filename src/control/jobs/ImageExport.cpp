@@ -14,7 +14,7 @@
 
 
 ImageExport::ImageExport(Document* doc, fs::path file, ExportGraphicsFormat format, bool hideBackground,
-                         PageRangeVector& exportRange):
+                         bool hidePaper, PageRangeVector& exportRange):
         doc(doc), file(std::move(file)), format(format), hideBackground(hideBackground), exportRange(exportRange) {}
 
 ImageExport::~ImageExport() = default;
@@ -144,14 +144,14 @@ void ImageExport::exportImagePage(int pageId, int id, double zoomRatio, ExportGr
         return;
     }
 
-    if (page->getBackgroundType().isPdfPage()) {
+    if (page->getBackgroundType().isPdfPage() && !hideBackground) {
         int pgNo = page->getPdfPageNr();
         XojPdfPageSPtr popplerPage = doc->getPdfPage(pgNo);
 
         PdfView::drawPage(nullptr, popplerPage, cr, zoomRatio, page->getWidth(), page->getHeight());
     }
 
-    view.drawPage(page, this->cr, true, hideBackground);
+    view.drawPage(page, this->cr, true, hidePaper);
 
     if (!freeSurface(id)) {
         // could not create this file...

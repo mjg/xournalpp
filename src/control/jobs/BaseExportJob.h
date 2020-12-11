@@ -57,7 +57,8 @@ protected:
     public:
         string extension;
         bool withoutBackground;
+        bool withoutPaper;
 
-        ExportType(string ext, bool hideBg): extension(ext), withoutBackground(hideBg) {}
+        ExportType(string ext, bool hideBg, bool hidePa): extension(ext), withoutBackground(hideBg), withoutPaper(hidePa) {}
     };
 };

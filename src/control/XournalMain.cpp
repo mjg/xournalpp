@@ -235,13 +235,14 @@ void checkForEmergencySave(Control* control) {
  * @param pngWidth Set the width for Png files. Non positive values are ignored
  * @param pngHeight Set the height for Png files. Non positive values are ignored
  * @param noBackground If true, the exported image file has transparent background
+ * @param noPaper If true, the exported image file has no paper background
  *
  *  The priority is: pngDpi overwrites pngWidth overwrites pngHeight
  *
  * @return 0 on success, -2 on failure opening the input file, -3 on export failure
  */
 auto exportImg(const char* input, const char* output, const char* range, int pngDpi, int pngWidth, int pngHeight,
-               bool noBackground) -> int {
+               bool noBackground, bool noPaper) -> int {
     LoadHandler loader;
 
     Document* doc = loader.loadDocument(input);
@@ -266,7 +267,7 @@ auto exportImg(const char* input, const char* output, const char* range, int png
 
     DummyProgressListener progress;
 
-    ImageExport imgExport(doc, path, format, noBackground, exportRange);
+    ImageExport imgExport(doc, path, format, noBackground, noPaper, exportRange);
 
     if (format == EXPORT_GRAPHICS_PNG) {
         if (pngDpi > 0) {
@@ -301,10 +302,11 @@ auto exportImg(const char* input, const char* output, const char* range, int png
  * @param output Path to the output file
  * @param range Page range to be parsed. If range=nullptr, exports the whole file
  * @param noBackground If true, the exported pdf file has white background
+ * @param noPaper If true, the exported image file has no paper background
  *
  * @return 0 on success, -2 on failure opening the input file, -3 on export failure
  */
-auto exportPdf(const char* input, const char* output, const char* range, bool noBackground) -> int {
+auto exportPdf(const char* input, const char* output, const char* range, bool noBackground, bool noPaper) -> int {
     LoadHandler loader;
 
     Document* doc = loader.loadDocument(input);
@@ -316,6 +318,7 @@ auto exportPdf(const char* input, const char* output, const char* range, bool no
 
     XojPdfExport* pdfe = XojPdfExportFactory::createExport(doc, nullptr);
     pdfe->setNoBackgroundExport(noBackground);
+    pdfe->setNoPaperExport(noPaper);
     char* cpath = g_file_get_path(file);
     string path = cpath;
     g_free(cpath);
@@ -371,6 +374,7 @@ struct XournalMainPrivate {
     int exportPngWidth = -1;
     int exportPngHeight = -1;
     bool exportNoBackground = false;
+    bool exportNoPaper = false;
     std::unique_ptr<GladeSearchpath> gladePath;
     std::unique_ptr<Control> control;
     std::unique_ptr<MainWindow> win;
@@ -577,11 +581,12 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
 
     if (app_data->pdfFilename && app_data->optFilename && *app_data->optFilename) {
         return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->exportRange,
-                         app_data->exportNoBackground);
+                         app_data->exportNoBackground, app_data->exportNoPaper);
     }
     if (app_data->imgFilename && app_data->optFilename && *app_data->optFilename) {
         return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->exportRange, app_data->exportPngDpi,
-                         app_data->exportPngWidth, app_data->exportPngHeight, app_data->exportNoBackground);
+                         app_data->exportPngWidth, app_data->exportPngHeight, app_data->exportNoBackground,
+			 app_data->exportNoPaper);
     }
     return -1;
 }
@@ -626,6 +631,10 @@ auto XournalMain::run(int argc, char** argv) -> int {
                            "                                 Guess the output format from the extension of IMGFILE\n"
                            "                                 Supported formats: .png, .svg"),
                          "IMGFILE"},
+            GOptionEntry{"export-no-paper", 0, 0, G_OPTION_ARG_NONE, &app_data.exportNoPaper,
+                         _("Export without paper background\n"
+                           "                                 The exported file has no paper background\n"),
+                         0},
             GOptionEntry{"export-no-background", 0, 0, G_OPTION_ARG_NONE, &app_data.exportNoBackground,
                          _("Export without background\n"
                            "                                 The exported file has transparent or white background,\n"

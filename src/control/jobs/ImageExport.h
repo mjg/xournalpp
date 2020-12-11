@@ -69,7 +69,7 @@ private:
 class ImageExport {
 public:
     ImageExport(Document* doc, fs::path file, ExportGraphicsFormat format, bool hideBackground,
-                PageRangeVector& exportRange);
+                bool hidePaper, PageRangeVector& exportRange);
     virtual ~ImageExport();
 
 public:
@@ -156,6 +156,7 @@ public:
      * Do not export the Background
      */
     bool hideBackground = false;
+    bool hidePaper = false;
 
     /**
      * The range to export

@@ -31,6 +31,7 @@ public:
      * Export without background
      */
     virtual void setNoBackgroundExport(bool noBackgroundExport);
+    virtual void setNoPaperExport(bool noPaperExport);
 
 private:
     bool startPdf(const fs::path& file);
@@ -56,6 +57,7 @@ private:
     cairo_t* cr = nullptr;
 
     bool noBackgroundExport = false;
+    bool noPaperExport = false;
 
     string lastError;
 };

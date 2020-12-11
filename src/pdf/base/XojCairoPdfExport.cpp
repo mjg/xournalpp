@@ -27,6 +27,10 @@ void XojCairoPdfExport::setNoBackgroundExport(bool noBackgroundExport) {
     this->noBackgroundExport = noBackgroundExport;
 }
 
+void XojCairoPdfExport::setNoPaperExport(bool noPaperExport) {
+    this->noPaperExport = noPaperExport;
+}
+
 auto XojCairoPdfExport::startPdf(const fs::path& file) -> bool {
     this->surface = cairo_pdf_surface_create(file.u8string().c_str(), 0, 0);
     this->cr = cairo_create(surface);
@@ -112,7 +116,7 @@ void XojCairoPdfExport::exportPage(size_t page) {
         popplerPage->render(cr, true);
     }
 
-    view.drawPage(p, this->cr, true /* dont render eraseable */, noBackgroundExport);
+    view.drawPage(p, this->cr, true /* dont render eraseable */, noPaperExport);
 
     // next page
     cairo_show_page(this->cr);

@@ -18,13 +18,16 @@
 
 CustomExportJob::CustomExportJob(Control* control): BaseExportJob(control, _("Custom Export")) {
     // Supported filters
-    filters[_("PDF files")] = new ExportType(".pdf", false);
-    filters[_("PDF with plain background")] = new ExportType(".pdf", true);
-    filters[_("PNG graphics")] = new ExportType(".png", false);
-    filters[_("PNG with transparent background")] = new ExportType(".png", true);
-    filters[_("SVG graphics")] = new ExportType(".svg", false);
-    filters[_("SVG with transparent background")] = new ExportType(".svg", true);
-    filters[_("Xournal (Compatibility)")] = new ExportType(".xoj", false);
+    filters[_("PDF files")] = new ExportType(".pdf", false, false);
+    filters[_("PDF without paper background")] = new ExportType(".pdf", false, true);
+    filters[_("PDF with plain background")] = new ExportType(".pdf", true, true);
+    filters[_("PNG graphics")] = new ExportType(".png", false, false);
+    filters[_("PNG without paper background")] = new ExportType(".png", false, true);
+    filters[_("PNG with transparent background")] = new ExportType(".png", true, true);
+    filters[_("SVG graphics")] = new ExportType(".svg", false, false);
+    filters[_("SVG without background")] = new ExportType(".svg", false, true);
+    filters[_("SVG with transparent background")] = new ExportType(".svg", true, true);
+    filters[_("Xournal (Compatibility)")] = new ExportType(".xoj", false, false);
 }
 
 CustomExportJob::~CustomExportJob() {
@@ -109,7 +112,8 @@ auto CustomExportJob::showFilechooser() -> bool {
  */
 void CustomExportJob::exportGraphics() {
     bool hideBackground = filters.at(this->chosenFilterName)->withoutBackground;
-    ImageExport imgExport(control->getDocument(), filepath, format, hideBackground, exportRange);
+    bool hidePaper = filters.at(this->chosenFilterName)->withoutPaper;
+    ImageExport imgExport(control->getDocument(), filepath, format, hideBackground, hidePaper, exportRange);
     if (format == EXPORT_GRAPHICS_PNG) {
         imgExport.setQualityParameter(pngQualityParameter);
     }
@@ -141,6 +145,7 @@ void CustomExportJob::run() {
         XojPdfExport* pdfe = XojPdfExportFactory::createExport(doc, control);
 
         pdfe->setNoBackgroundExport(filters[this->chosenFilterName]->withoutBackground);
+        pdfe->setNoPaperExport(filters[this->chosenFilterName]->withoutPaper);
 
         if (!pdfe->createPdf(this->filepath, exportRange)) {
             this->errorMsg = pdfe->getLastError();
