@@ -148,6 +148,7 @@ void ImageExport::exportImagePage(int pageId, int id, double zoomRatio, ExportGr
         int pgNo = page->getPdfPageNr();
         XojPdfPageSPtr popplerPage = doc->getPdfPage(pgNo);
 
+        // TODO cairo does not render PDF to SVG: render to intermediate image
         PdfView::drawPage(nullptr, popplerPage, cr, zoomRatio, page->getWidth(), page->getHeight());
     }
 
