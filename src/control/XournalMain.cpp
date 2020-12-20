@@ -352,7 +352,7 @@ struct XournalMainPrivate {
     XournalMainPrivate() = default;
     XournalMainPrivate(XournalMainPrivate&&) = delete;
     XournalMainPrivate(XournalMainPrivate const&) = delete;
-    auto operator=(XournalMainPrivate &&) -> XournalMainPrivate = delete;
+    auto operator=(XournalMainPrivate&&) -> XournalMainPrivate = delete;
     auto operator=(XournalMainPrivate const&) -> XournalMainPrivate = delete;
 
     ~XournalMainPrivate() {
@@ -371,6 +371,7 @@ struct XournalMainPrivate {
     int exportPngWidth = -1;
     int exportPngHeight = -1;
     bool exportNoBackground = false;
+    bool exportNoRuling = false;
     std::unique_ptr<GladeSearchpath> gladePath;
     std::unique_ptr<Control> control;
     std::unique_ptr<MainWindow> win;
@@ -577,12 +578,16 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
 
     if (app_data->pdfFilename && app_data->optFilename && *app_data->optFilename) {
         return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->exportRange,
-                         app_data->exportNoBackground ? EXPORT_BACKGROUND_NONE : EXPORT_BACKGROUND_ALL);
+                         app_data->exportNoBackground ? EXPORT_BACKGROUND_NONE :
+                         app_data->exportNoRuling     ? EXPORT_BACKGROUND_UNRULED :
+                                                        EXPORT_BACKGROUND_ALL);
     }
     if (app_data->imgFilename && app_data->optFilename && *app_data->optFilename) {
         return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->exportRange, app_data->exportPngDpi,
                          app_data->exportPngWidth, app_data->exportPngHeight,
-                         app_data->exportNoBackground ? EXPORT_BACKGROUND_NONE : EXPORT_BACKGROUND_ALL);
+                         app_data->exportNoBackground ? EXPORT_BACKGROUND_NONE :
+                         app_data->exportNoRuling     ? EXPORT_BACKGROUND_UNRULED :
+                                                        EXPORT_BACKGROUND_ALL);
     }
     return -1;
 }
@@ -631,6 +636,10 @@ auto XournalMain::run(int argc, char** argv) -> int {
                          _("Export without background\n"
                            "                                 The exported file has transparent or white background,\n"
                            "                                 depending on what its format supports\n"),
+                         0},
+            GOptionEntry{"export-no-ruling", 0, 0, G_OPTION_ARG_NONE, &app_data.exportNoRuling,
+                         _("Export without ruling\n"
+                           "                                 The exported file has no paper ruling\n"),
                          0},
             GOptionEntry{"export-range", 0, 0, G_OPTION_ARG_STRING, &app_data.exportRange,
                          _("Only export the pages specified by RANGE (e.g. \"2-3,5,7-\")\n"
