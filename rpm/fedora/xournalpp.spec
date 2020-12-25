@@ -1,4 +1,4 @@
-%global	build_repo https://github.com/xournalpp/xournalpp/
+%global	build_repo https://github.com/mjg/xournalpp/
 %global	build_branch master
 %global	version_string 1.0.21
 %define	build_commit %(git ls-remote %{build_repo} | grep "refs/heads/%{build_branch}" | cut -c1-41)
@@ -14,7 +14,7 @@ Release:        0.1.%{rel_build}
 Summary:        Handwriting note-taking software with PDF annotation support
 
 License:        GPLv2+
-URL:            https://github.com/%{name}/%{name}
+URL:            %{build_repo}
 Source:         %{url}/archive/%{build_branch}.tar.gz
 
 BuildRequires:  cmake >= 3.10
