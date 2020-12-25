@@ -77,15 +77,20 @@ The %{name}-ui package contains a graphical user interface for  %{name}.
          -DENABLE_GTEST=ON
         %endif
 %cmake_build
+# Add translations parameter
+# https://github.com/xournalpp/xournalpp/issues/1596
+# %%cmake3_build --target translations
 
 %install
 %cmake_install
 
 #Remove depreciated key from desktop file
+#Fix desktop file associated with application
 desktop-file-install \
  --remove-key="Encoding" \
+ --set-key="StartupWMClass" \
+ --set-value="xournalpp" \
   %{buildroot}%{_datadir}/applications/com.github.%{name}.%{name}.desktop
-
 %find_lang %{name}
 
 %check
@@ -95,7 +100,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %files -f %{name}.lang
 %license LICENSE
 %doc README.md AUTHORS
-%{_bindir}/xournalpp-thumbnailer
+%{_bindir}/xournal-thumbnailer
 %{_bindir}/%{name}
 %{_datadir}/applications/com.github.%{name}.%{name}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/com.github.%{name}.%{name}.svg
