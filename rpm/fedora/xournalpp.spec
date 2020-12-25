@@ -1,6 +1,6 @@
 %global	build_repo https://github.com/xournalpp/xournalpp/
 %global	build_branch master
-%global	version_string 1.0.17
+%global	version_string 1.0.21
 %define	build_commit %(git ls-remote %{build_repo} | grep "refs/heads/%{build_branch}" | cut -c1-41)
 %define	build_shortcommit %(c=%{build_commit}; echo ${c:0:7})
 %global	build_timestamp %(date +"%Y%m%d")
@@ -17,12 +17,17 @@ License:        GPLv2+
 URL:            https://github.com/%{name}/%{name}
 Source:         %{url}/archive/%{build_branch}.tar.gz
 
-BuildRequires:  cmake3 >= 3.10
+BuildRequires:  cmake >= 3.10
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc-c++
 BuildRequires:  gettext
 BuildRequires:  git
 BuildRequires:  libappstream-glib
+  
+# Work around firefox carrying bogus Provides:
+# https://bugzilla.redhat.com/show_bug.cgi?id=1908018#c12
+BuildRequires: nss nspr 
+
 %{?_with_cppunit:
 BuildRequires:  pkgconfig(cppunit) >= 1.12-0
 }
@@ -34,9 +39,6 @@ BuildRequires:  pkgconfig(lua)
 BuildRequires:  pkgconfig(poppler-glib)
 BuildRequires:  pkgconfig(portaudiocpp) >= 12
 BuildRequires:  pkgconfig(sndfile)
-Recommends:     texlive-scheme-basic
-Recommends:     texlive-dvipng
-Recommends:     texlive-standalone
 Requires:       hicolor-icon-theme
 Requires:       %{name}-plugins = %{version}-%{release}
 Requires:       %{name}-ui = %{version}-%{release}
@@ -68,24 +70,30 @@ mv po/tlh_AA.po po/tlh.po
 sed -i 's|tlh-AA|tlh|g' po/tlh.po
 
 %build
-%cmake3 \
-        %{_with_cppunit: -DENABLE_CPPUNIT=ON} \
-        .
-%make_build translations
+%cmake \
+        %{?_with_cppunit: -DENABLE_CPPUNIT=ON} \
+        -DMAC_INTEGRATION=OFF 
+
+%cmake_build
+# Add translations parameter
+# https://github.com/xournalpp/xournalpp/issues/1596
+# %%cmake3_build --target translations
 
 %install
-%make_install
+%cmake_install
 
 #Remove depreciated key from desktop file
+#Fix desktop file associated with application
 desktop-file-install \
  --remove-key="Encoding" \
+ --set-key="StartupWMClass" \
+ --set-value="xournalpp" \
   %{buildroot}%{_datadir}/applications/com.github.%{name}.%{name}.desktop
-
 %find_lang %{name}
 
 #Remove scripts from icons interface
-rm -r %{buildroot}%{_datadir}/%{name}/ui/icons/hicolor/update-icon-cache.sh
-rm -r %{buildroot}%{_datadir}/%{name}/ui/iconsDark/hicolor/update-icon-cache.sh
+#rm -r %%{buildroot}%%{_datadir}/%%{name}/ui/icons/hicolor/update-icon-cache.sh
+#rm -r %%{buildroot}%%{_datadir}/%%{name}/ui/iconsDark/hicolor/update-icon-cache.sh
 
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/com.github.%{name}.%{name}.desktop
@@ -94,7 +102,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %files -f %{name}.lang
 %license LICENSE
 %doc README.md AUTHORS
-%{_bindir}/xournalpp-thumbnailer
+%{_bindir}/xournal-thumbnailer
 %{_bindir}/%{name}
 %{_datadir}/applications/com.github.%{name}.%{name}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/com.github.%{name}.%{name}.svg
