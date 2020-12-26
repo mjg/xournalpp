@@ -102,7 +102,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %files -f %{name}.lang
 %license LICENSE
 %doc README.md AUTHORS
-%{_bindir}/xournal-thumbnailer
+%{_bindir}/xournalpp-thumbnailer
 %{_bindir}/%{name}
 %{_datadir}/applications/com.github.%{name}.%{name}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/com.github.%{name}.%{name}.svg
@@ -111,6 +111,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %exclude %{_datadir}/mimelnk/application/*
 %{_datadir}/thumbnailers/com.github.%{name}.%{name}.thumbnailer
 %dir %{_datadir}/%{name}
+%{_datadir}/%{name}/resources/default_template.tex
 %{_metainfodir}/com.github.%{name}.%{name}.appdata.xml
 
 %files plugins
