@@ -48,6 +48,7 @@ Recommends:     texlive-standalone
 Requires:       hicolor-icon-theme
 Requires:       %{name}-plugins = %{version}-%{release}
 Requires:       %{name}-ui = %{version}-%{release}
+Requires:	texlive-scontents
 
 %description
 Xournal++ is a handwriting note-taking software with PDF annotation support.
