@@ -81,6 +81,7 @@ void PreviewJob::drawPage() {
                 break;  // out
             }           // else fall through for layer == -1
 
+        case RENDER_TYPE_PAGE_LAYERSTACK:
         case RENDER_TYPE_PAGE_PREVIEW:
             if (page->getBackgroundType().isPdfPage()) {
                 drawBackgroundPdf(doc);
@@ -105,6 +106,17 @@ void PreviewJob::drawPage() {
                 view.drawBackground();
             } else {
                 Layer* drawLayer = (*page->getLayers())[layer];
+                view.drawLayer(cr2, drawLayer);
+            }
+            view.finializeDrawing();
+            break;
+
+        case RENDER_TYPE_PAGE_LAYERSTACK:
+            // render all layers up to layer
+            view.initDrawing(page, cr2, true);
+            view.drawBackground();
+            for (int i = 0; i <= layer; i++) {
+                Layer* drawLayer = (*page->getLayers())[i];
                 view.drawLayer(cr2, drawLayer);
             }
             view.finializeDrawing();
