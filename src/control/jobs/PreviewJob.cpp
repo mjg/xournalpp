@@ -64,19 +64,31 @@ void PreviewJob::drawPage(int layer) {
     PageRef page = this->sidebarPreview->page;
     Document* doc = this->sidebarPreview->sidebar->getControl()->getDocument();
 
-    if (page->getBackgroundType().isPdfPage() && (layer == -100 || layer == -1)) {
+    if (page->getBackgroundType().isPdfPage() && (layer < 0)) {
         drawBackgroundPdf(doc);
     }
 
     if (layer == -100) {
-        // render all layer
+        // render all layers
         view.drawPage(page, cr2, true);
-    } else if (layer == -1) {
-        // draw only background
+    } else if (layer == -999 or layer == -1) {
+        // draw only background (stacked or not)
         view.initDrawing(page, cr2, true);
         view.drawBackground();
         view.finializeDrawing();
+    } else if (layer <= -1000) {
+        // render all layers up to -layer-1000
+        view.initDrawing(page, cr2, true);
+        view.drawBackground();
+
+        for (int i = 0; i <= -layer - 1000; i++) {
+            Layer* drawLayer = (*page->getLayers())[i];
+            view.drawLayer(cr2, drawLayer);
+        }
+
+        view.finializeDrawing();
     } else {
+        // render single non-background layer
         view.initDrawing(page, cr2, true);
 
         Layer* drawLayer = (*page->getLayers())[layer];
@@ -96,10 +108,12 @@ void PreviewJob::run() {
     doc->lock();
 
     PreviewRenderType type = this->sidebarPreview->getRenderType();
-    int layer = -100;  // all layer
+    int layer = -100;  // all layers
 
     if (RENDER_TYPE_PAGE_LAYER == type) {
         layer = (dynamic_cast<SidebarPreviewLayerEntry*>(this->sidebarPreview))->getLayer();
+    } else if (RENDER_TYPE_PAGE_LAYERSTACK == type) {
+        layer = -1000 - (dynamic_cast<SidebarPreviewLayerEntry*>(this->sidebarPreview))->getLayer();
     }
 
     drawPage(layer);
