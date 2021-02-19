@@ -21,7 +21,7 @@ auto ObjectInputStream::read(const char* data, int len) -> bool {
 
 
     //	//clipboad debug
-    //	FILE * fp = fopen("/home/andreas/tmp/xoj/clipboard.bin", "w");
+    //	FILE * fp = fopen("clipboard.bin", "w");
     //	fwrite(str->str, len, 1, fp);
     //	fclose(fp);
 
