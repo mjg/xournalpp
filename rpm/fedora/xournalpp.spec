@@ -29,6 +29,7 @@ BuildRequires:  gcc-c++
 BuildRequires:  gettext
 BuildRequires:  git
 BuildRequires:  libappstream-glib
+BuildRequires:  help2man
   
 # Work around firefox carrying bogus Provides:
 # https://bugzilla.redhat.com/show_bug.cgi?id=1908018#c12
@@ -120,6 +121,8 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %{_datadir}/thumbnailers/com.github.%{name}.%{name}.thumbnailer
 %dir %{_datadir}/%{name}
 %{_datadir}/%{name}/resources/default_template.tex
+%{_mandir}/man1/%{name}.1.gz
+%{_mandir}/man1/%{name}-thumbnailer.1.gz
 %{_metainfodir}/com.github.%{name}.%{name}.appdata.xml
 
 %files plugins
