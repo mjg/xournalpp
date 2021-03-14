@@ -32,6 +32,7 @@ BuildRequires:  gcc-c++
 BuildRequires:  gettext
 BuildRequires:  git
 BuildRequires:  libappstream-glib
+BuildRequires:  help2man
 BuildRequires:  pkgconfig(glib-2.0) >= 2.32.0
 BuildRequires:  pkgconfig(gtk+-3.0) >= 3.18.9
 BuildRequires:  pkgconfig(librsvg-2.0)
@@ -111,6 +112,8 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %{_datadir}/thumbnailers/com.github.%{name}.%{name}.thumbnailer
 %dir %{_datadir}/%{name}
 %{_datadir}/%{name}/resources/{default,legacy}_template.tex
+%{_mandir}/man1/%{name}.1.gz
+%{_mandir}/man1/%{name}-thumbnailer.1.gz
 %{_metainfodir}/com.github.%{name}.%{name}.appdata.xml
 
 %files plugins
