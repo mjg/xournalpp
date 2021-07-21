@@ -13,7 +13,6 @@
 #pragma once
 
 #include <string>
-using std::string;
 
 /******************************************************************************
 *******************************************************************************
@@ -55,6 +54,8 @@ enum ActionGroup {
 
     GROUP_GRID_SNAPPING,
 
+    GROUP_HIGHLIGHT_POSITION,
+
     GROUP_FILL,
 
     GROUP_FIXED_ROW_OR_COLS,
@@ -68,5 +69,5 @@ enum ActionGroup {
     GROUP_ZOOM_FIT,
 };
 
-ActionGroup ActionGroup_fromString(const string& value);
-string ActionGroup_toString(ActionGroup value);
+ActionGroup ActionGroup_fromString(const std::string& value);
+std::string ActionGroup_toString(ActionGroup value);

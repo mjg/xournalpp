@@ -50,6 +50,7 @@
 #include "config.h"
 #include "i18n.h"
 
+using std::string;
 
 Control::Control(GApplication* gtkApp, GladeSearchpath* gladeSearchPath): gtkApp(gtkApp) {
     this->recent = new RecentManager();
@@ -417,6 +418,9 @@ void Control::actionPerformed(ActionType type, ActionGroup group, GdkEvent* even
             break;
         case ACTION_SETTINGS:
             showSettings();
+            break;
+        case ACTION_HIGHLIGHT_POSITION:
+            highlightPositionToggle();
             break;
 
         case ACTION_ARRANGE_BRING_TO_FRONT:
@@ -2078,19 +2082,17 @@ auto Control::openFile(fs::path filepath, int scrollToPage, bool forceOpen) -> b
 auto Control::loadPdf(const fs::path& filepath, int scrollToPage) -> bool {
     LoadHandler loadHandler;
 
-    if (settings->isAutloadPdfXoj()) {
-        fs::path f = filepath;
-        Util::clearExtensions(f);
-        f += ".xopp";
-        Document* tmp = loadHandler.loadDocument(f);
-
-        if (tmp == nullptr) {
-            f = filepath;
-            Util::clearExtensions(f);
-            f += ".xoj";
+    if (settings->isAutoloadPdfXoj()) {
+        Document* tmp;
+        const std::vector<std::string> exts = {".xopp", ".xoj", ".pdf.xopp", ".pdf.xoj"};
+        for (const std::string& ext: exts) {
+            fs::path f = filepath;
+            Util::clearExtensions(f, ".pdf");
+            f += ext;
             tmp = loadHandler.loadDocument(f);
+            if (tmp)
+                break;
         }
-
         if (tmp) {
             this->doc->lock();
             this->doc->clearDocument();
@@ -2520,8 +2522,8 @@ void Control::applyPreferredLanguage() {
 }
 
 void Control::initButtonTool() {
-    vector<Button> buttons{Button::BUTTON_ERASER,       Button::BUTTON_STYLUS_ONE,  Button::BUTTON_STYLUS_TWO,
-                           Button::BUTTON_MOUSE_MIDDLE, Button::BUTTON_MOUSE_RIGHT, Button::BUTTON_TOUCH};
+    std::vector<Button> buttons{Button::BUTTON_ERASER,       Button::BUTTON_STYLUS_ONE,  Button::BUTTON_STYLUS_TWO,
+                                Button::BUTTON_MOUSE_MIDDLE, Button::BUTTON_MOUSE_RIGHT, Button::BUTTON_TOUCH};
     ButtonConfig* cfg;
     for (auto b: buttons) {
         cfg = settings->getButtonConfig(b);
@@ -2531,8 +2533,8 @@ void Control::initButtonTool() {
 
 auto Control::askToReplace(fs::path const& filepath) const -> bool {
     if (fs::exists(filepath)) {
-        string msg = FS(FORMAT_STR("The file {1} already exists! Do you want to replace it?") %
-                        filepath.filename().u8string());
+        std::string msg = FS(FORMAT_STR("The file {1} already exists! Do you want to replace it?") %
+                             filepath.filename().u8string());
         int res = XojMsgBox::replaceFileQuestion(getGtkWindow(), msg);
         return res == GTK_RESPONSE_OK;
     }
@@ -2858,6 +2860,12 @@ void Control::gridSnappingToggle() {
     fireActionSelected(GROUP_GRID_SNAPPING, settings->isSnapGrid() ? ACTION_GRID_SNAPPING : ACTION_NONE);
 }
 
+void Control::highlightPositionToggle() {
+    settings->setHighlightPosition(!settings->isHighlightPosition());
+    fireActionSelected(GROUP_HIGHLIGHT_POSITION,
+                       settings->isHighlightPosition() ? ACTION_HIGHLIGHT_POSITION : ACTION_NONE);
+}
+
 auto Control::getTextEditor() -> TextEditor* {
     if (this->win) {
         return this->win->getXournal()->getTextEditor();
@@ -2866,6 +2874,8 @@ auto Control::getTextEditor() -> TextEditor* {
 }
 
 auto Control::getGladeSearchPath() -> GladeSearchpath* { return this->gladeSearchPath; }
+
+auto Control::getRecentManager() -> RecentManager* { return recent; }
 
 auto Control::getSettings() -> Settings* { return settings; }
 

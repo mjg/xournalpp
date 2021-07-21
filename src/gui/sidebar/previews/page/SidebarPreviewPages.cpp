@@ -70,9 +70,9 @@ void SidebarPreviewPages::enableSidebar() {
     pageSelected(this->selectedEntry);
 }
 
-auto SidebarPreviewPages::getName() -> string { return _("Page Preview"); }
+auto SidebarPreviewPages::getName() -> std::string { return _("Page Preview"); }
 
-auto SidebarPreviewPages::getIconName() -> string { return this->iconNameHelper.iconName("sidebar-page-preview"); }
+auto SidebarPreviewPages::getIconName() -> std::string { return this->iconNameHelper.iconName("sidebar-page-preview"); }
 
 /**
  * Called when an action is performed
@@ -187,14 +187,7 @@ void SidebarPreviewPages::updatePreviews() {
     doc->lock();
     size_t len = doc->getPageCount();
 
-    if (this->previews.size() == len) {
-        doc->unlock();
-        return;
-    }
-
-    for (SidebarPreviewBaseEntry* p: this->previews) {
-        delete p;
-    }
+    for (SidebarPreviewBaseEntry* p: this->previews) { delete p; }
     this->previews.clear();
 
     for (size_t i = 0; i < len; i++) {
@@ -263,9 +256,7 @@ void SidebarPreviewPages::pageInserted(size_t page) {
  * Unselect the last selected page, if any
  */
 void SidebarPreviewPages::unselectPage() {
-    for (SidebarPreviewBaseEntry* p: this->previews) {
-        p->setSelected(false);
-    }
+    for (SidebarPreviewBaseEntry* p: this->previews) { p->setSelected(false); }
 }
 
 void SidebarPreviewPages::pageSelected(size_t page) {

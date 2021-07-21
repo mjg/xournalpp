@@ -13,6 +13,9 @@
 #include "Util.h"
 #include "i18n.h"
 
+using std::string;
+using std::vector;
+
 SettingsDialog::SettingsDialog(GladeSearchpath* gladeSearchPath, Settings* settings, Control* control):
         GladeGui(gladeSearchPath, "settings.glade", "settingsDialog"),
         settings(settings),
@@ -294,8 +297,6 @@ void SettingsDialog::customHandRecognitionToggled() {
 void SettingsDialog::customStylusIconTypeChanged() {
     GtkWidget* cbStylusCursorType = get("cbStylusCursorType");
     int stylusCursorType = gtk_combo_box_get_active(GTK_COMBO_BOX(cbStylusCursorType));
-    bool showCursorHighlightOptions = stylusCursorType != STYLUS_CURSOR_NONE;
-    gtk_widget_set_sensitive(get("highlightCursorGrid"), showCursorHighlightOptions);
 }
 
 void SettingsDialog::showStabilizerAvMethodOptions(StrokeStabilizer::AveragingMethod method) {
@@ -336,7 +337,8 @@ void SettingsDialog::load() {
     loadCheckbox("cbEnableZoomGestures", settings->isZoomGesturesEnabled());
     loadCheckbox("cbShowSidebarRight", settings->isSidebarOnRight());
     loadCheckbox("cbShowScrollbarLeft", settings->isScrollbarOnLeft());
-    loadCheckbox("cbAutoloadXoj", settings->isAutloadPdfXoj());
+    loadCheckbox("cbAutoloadMostRecent", settings->isAutoloadMostRecent());
+    loadCheckbox("cbAutoloadXoj", settings->isAutoloadPdfXoj());
     loadCheckbox("cbAutosave", settings->isAutosaveEnabled());
     loadCheckbox("cbAddVerticalSpace", settings->getAddVerticalSpace());
     loadCheckbox("cbAddHorizontalSpace", settings->getAddHorizontalSpace());
@@ -660,6 +662,7 @@ void SettingsDialog::save() {
     settings->setZoomGesturesEnabled(getCheckbox("cbEnableZoomGestures"));
     settings->setSidebarOnRight(getCheckbox("cbShowSidebarRight"));
     settings->setScrollbarOnLeft(getCheckbox("cbShowScrollbarLeft"));
+    settings->setAutoloadMostRecent(getCheckbox("cbAutoloadMostRecent"));
     settings->setAutoloadPdfXoj(getCheckbox("cbAutoloadXoj"));
     settings->setAutosaveEnabled(getCheckbox("cbAutosave"));
     settings->setAddVerticalSpace(getCheckbox("cbAddVerticalSpace"));
