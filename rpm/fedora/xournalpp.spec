@@ -8,11 +8,11 @@
 %define	build_commit %(git ls-remote %{build_repo} | grep "refs/heads/%{build_branch}" | cut -c1-41)
 %define	build_shortcommit %(c=%{build_commit}; echo ${c:0:7})
 %global	build_timestamp %(date +"%Y%m%d")
-%global	rel_build %{build_timestamp}git%{build_shortcommit}%{?dist}
+%global	rel_build %{build_timestamp}git%{build_shortcommit}
 
 Name:           xournalpp
-Version:        %{version_string}
-Release:        0.1.%{rel_build}
+Version:        %{version_string}^%{rel_build}
+Release:        1%{?dist}
 Summary:        Handwriting note-taking software
 
 License:        GPLv2+
