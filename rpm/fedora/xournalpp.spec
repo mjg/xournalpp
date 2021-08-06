@@ -67,6 +67,8 @@ The %{name}-ui package contains a graphical user interface for  %{name}.
 %build
 %cmake \
         %{?_gtest: -DENABLE_GTEST=ON} \
+        -DDISTRO_CODENAME="Fedora Linux" \
+        -DGIT_VERSION=%{build_shortcommit} \
         -DENABLE_MATHTEX=ON \
         -DMAC_INTEGRATION=OFF 
 
