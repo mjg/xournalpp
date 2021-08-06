@@ -1,7 +1,5 @@
-# This spec file is intended for a daily git snapshot
-
-# Force out of source build
-%undefine __cmake_in_source_build
+%global         __cmake_in_source_build 0
+%global         _gtest 1
 
 #This spec file is intended for daily development snapshot release
 %global	build_repo https://github.com/mjg/xournalpp/
@@ -11,16 +9,11 @@
 %define	build_shortcommit %(c=%{build_commit}; echo ${c:0:7})
 %global	build_timestamp %(date +"%Y%m%d")
 %global	rel_build %{build_timestamp}git%{build_shortcommit}%{?dist}
-%bcond_without  gtest
-
 
 Name:           xournalpp
 Version:        %{version_string}
-# For prerelease, use 0
-# For postrelease, use 1^
-# See https://docs.fedoraproject.org/en-US/packaging-guidelines/Versioning/#_examples
-Release:        1^%{rel_build}
-Summary:        Handwriting note-taking software with PDF annotation support
+Release:        0.1.%{rel_build}
+Summary:        Handwriting note-taking software
 
 License:        GPLv2+
 URL:            %{build_repo}
@@ -28,6 +21,7 @@ Source:         %{url}/archive/%{build_branch}.tar.gz
 
 BuildRequires:  cmake >= 3.10
 BuildRequires:  desktop-file-utils
+BuildRequires:  fdupes
 BuildRequires:  gcc-c++
 BuildRequires:  gettext
 BuildRequires:  git
@@ -36,20 +30,17 @@ BuildRequires:  help2man
 BuildRequires:  pkgconfig(glib-2.0) >= 2.32.0
 BuildRequires:  pkgconfig(gtk+-3.0) >= 3.18.9
 BuildRequires:  pkgconfig(librsvg-2.0)
-BuildRequires:  pkgconfig(libxml-2.0) >= 2.0.0
-BuildRequires:  pkgconfig(libzip) >= 1.0.1
-BuildRequires:  pkgconfig(lua) >= 5.3
-BuildRequires:  pkgconfig(poppler-glib) >= 0.41.0
+BuildRequires:  pkgconfig(libxml-2.0)
+BuildRequires:  pkgconfig(libzip)
+BuildRequires:  pkgconfig(lua)
+BuildRequires:  pkgconfig(poppler-glib)
 BuildRequires:  pkgconfig(portaudiocpp) >= 12
-BuildRequires:  pkgconfig(sndfile) >= 1.0.25
-BuildRequires:	pkgconfig(zlib)
-Recommends:     texlive-scheme-basic
-Recommends:     texlive-dvipng
-Recommends:     texlive-standalone
+BuildRequires:  pkgconfig(sndfile)
+BuildRequires:  tex-latex-bin
 Requires:       hicolor-icon-theme
 Requires:       %{name}-plugins = %{version}-%{release}
 Requires:       %{name}-ui = %{version}-%{release}
-Requires:	texlive-scontents
+Requires:       texlive-scontents
 
 %description
 Xournal++ is a handwriting note-taking software with PDF annotation support.
@@ -75,13 +66,11 @@ The %{name}-ui package contains a graphical user interface for  %{name}.
 
 %build
 %cmake \
-        %if %{with gtest}
-         -DENABLE_GTEST=ON
-        %endif
+        %{?_gtest: -DENABLE_GTEST=ON} \
+        -DENABLE_MATHTEX=ON \
+        -DMAC_INTEGRATION=OFF 
+
 %cmake_build
-# Add translations parameter
-# https://github.com/xournalpp/xournalpp/issues/1596
-# %%cmake3_build --target translations
 
 %install
 %cmake_install
@@ -95,6 +84,11 @@ desktop-file-install \
   %{buildroot}%{_datadir}/applications/com.github.%{name}.%{name}.desktop
 %find_lang %{name}
 
+# REMOVE UNNECESSARY SCRIPTS
+find %{buildroot}%{_datadir}/%{name} -name update-icon-cache.sh -delete -print
+
+%fdupes %{buildroot}%{_datadir}
+
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/com.github.%{name}.%{name}.desktop
 appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{name}.%{name}.appdata.xml
@@ -102,7 +96,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %files -f %{name}.lang
 %license LICENSE
 %doc README.md AUTHORS
-%{_bindir}/xournalpp-thumbnailer
+%{_bindir}/%{name}-thumbnailer
 %{_bindir}/%{name}
 %{_datadir}/applications/com.github.%{name}.%{name}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/com.github.%{name}.%{name}.svg
@@ -111,8 +105,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %exclude %{_datadir}/mimelnk/application/*
 %{_datadir}/thumbnailers/com.github.%{name}.%{name}.thumbnailer
 %dir %{_datadir}/%{name}
-%{_datadir}/%{name}/resources/default_template.tex
-%{_datadir}/%{name}/resources/legacy_template.tex
+%{_datadir}/%{name}/resources/*_template.tex
 %{_mandir}/man1/%{name}.1.gz
 %{_mandir}/man1/%{name}-thumbnailer.1.gz
 %{_metainfodir}/com.github.%{name}.%{name}.appdata.xml
