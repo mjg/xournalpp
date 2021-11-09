@@ -1,5 +1,5 @@
 %global         __cmake_in_source_build 0
-%global         _gtest 1
+# %%global         _gtest 1
 
 #This spec file is intended for daily development snapshot release
 %global	build_repo https://github.com/mjg/xournalpp/
@@ -27,6 +27,10 @@ BuildRequires:  gettext
 BuildRequires:  git
 BuildRequires:  libappstream-glib
 BuildRequires:  help2man
+#This would be the right way to do it xpp downloads from Google nonetheless.
+%{?_gtest:
+BuildRequires:  pkgconfig(gtest)
+}
 BuildRequires:  pkgconfig(glib-2.0) >= 2.32.0
 BuildRequires:  pkgconfig(gtk+-3.0) >= 3.18.9
 BuildRequires:  pkgconfig(librsvg-2.0)
