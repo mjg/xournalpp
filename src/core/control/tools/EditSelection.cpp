@@ -979,7 +979,7 @@ void EditSelection::paint(cairo_t* cr, double zoom) {
 
         if (supportRotation) {
             // rotation handle
-            drawAnchorRotation(cr, std::min(x, x + width) + std::abs(width) + (ROTATE_PADDING + this->btnWidth) / zoom,
+            drawAnchorRotation(cr, std::max(x, x + width) + (ROTATE_PADDING + this->btnWidth) / zoom,
                                y + height / 2, zoom);
         }
     }
