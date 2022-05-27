@@ -46,6 +46,9 @@ void ArrowHandler::drawShape(Point& c, const PositionInputData& pos) {
 
         // set up the size of the arrowhead to be 7x the thickness of the line
         double arrowDist = xournal->getControl()->getToolHandler()->getThickness() * 7.0;
+        // but not too large compared to the line length
+        double lineLength = sqrt(pow(c.x - firstPoint.x, 2) + pow(c.y - firstPoint.y, 2));
+        arrowDist = std::min(arrowDist, 0.4 * lineLength);
 
         // an appropriate delta is Pi/3 radians for an arrow shape
         double delta = M_PI / 6.0;
