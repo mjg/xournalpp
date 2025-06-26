@@ -1,6 +1,9 @@
 # Force out of source build
 %global __cmake_in_source_build 0
 
+# Build woth qpdf export backend
+%bcond qpdf 1
+
 #This spec file is intended for daily development snapshot release
 %global build_shortcommit {{{ git rev-parse --short HEAD }}}
 %global version_string {{{ git describe --tags --match 'v[0-9]*' | sed -e 's/^v\(.*\)-\([0-9]*\)-g\(.*\)$/\1^\2.g\3/' }}}
@@ -37,6 +40,9 @@ BuildRequires:  pkgconfig(libzip) >= 1.0.1
 BuildRequires:  pkgconfig(lua) >= 5.3
 BuildRequires:  pkgconfig(poppler-glib) >= 0.41.0
 BuildRequires:  pkgconfig(portaudiocpp) >= 12
+%if %{with qpdf}
+BuildRequires:  pkgconfig(libqpdf) >= 10.6.0
+%endif
 BuildRequires:  pkgconfig(sndfile) >= 1.0.25
 BuildRequires:  pkgconfig(zlib)
 BuildRequires:  pkgconfig(gtksourceview-4) >= 4.0
@@ -73,6 +79,7 @@ The %{name}-ui package contains a graphical user interface for  %{name}.
 %cmake \
         -DDISTRO_CODENAME="Fedora Linux" \
         %{?_gtest: -DENABLE_GTEST=ON} \
+        -DENABLE_QPDF=%{?with_qpdf:ON}%{!?with_qpdf:OFF} \
         -DENABLE_MATHTEX=ON \
         -DGIT_VERSION=%{build_shortcommit} \
         -DMAC_INTEGRATION=OFF
