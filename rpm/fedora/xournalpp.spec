@@ -72,6 +72,7 @@ The %{name}-ui package contains a graphical user interface for  %{name}.
 %build
 %cmake \
         -DDISTRO_CODENAME="Fedora Linux" \
+        -DENABLE_CPPTRACE=OFF \
         %{?_gtest: -DENABLE_GTEST=ON} \
         -DENABLE_MATHTEX=ON \
         -DGIT_VERSION=%{build_shortcommit} \
@@ -103,6 +104,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %doc README.md AUTHORS
 %{_bindir}/%{name}-thumbnailer
 %{_bindir}/%{name}
+%{_bindir}/%{name}-wrapper
 %{_datadir}/applications/com.github.%{name}.%{name}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/com.github.%{name}.%{name}.svg
 %{_datadir}/icons/hicolor/scalable/mimetypes/*
