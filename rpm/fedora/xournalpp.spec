@@ -68,6 +68,8 @@ The %{name}-ui package contains a graphical user interface for  %{name}.
 
 %prep
 %autosetup -n %{name}
+#Do not build the wrapper which requires external sources
+sed -i -e 's/if (NOT CMAKE_BUILD_TYPE STREQUAL "Release")/if (0)/' CMakeLists.txt
 
 %build
 %cmake \
@@ -103,6 +105,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %doc README.md AUTHORS
 %{_bindir}/%{name}-thumbnailer
 %{_bindir}/%{name}
+%{_bindir}/%{name}-wrapper
 %{_datadir}/applications/com.github.%{name}.%{name}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/com.github.%{name}.%{name}.svg
 %{_datadir}/icons/hicolor/scalable/mimetypes/*
