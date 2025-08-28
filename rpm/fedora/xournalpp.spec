@@ -1,6 +1,9 @@
 # Force out of source build
 %global __cmake_in_source_build 0
 
+# Build with qpdf export backend
+%bcond qpdf 1
+
 #This spec file is intended for daily development snapshot release
 %global build_shortcommit {{{ git rev-parse --short HEAD }}}
 %global version_string {{{ git describe --tags --match 'v[0-9]*' | sed -e 's/^v\(.*\)-\([0-9]*\)-g\(.*\)$/\1^\2.g\3/' }}}
@@ -37,6 +40,9 @@ BuildRequires:  pkgconfig(libzip) >= 1.0.1
 BuildRequires:  pkgconfig(lua) >= 5.3
 BuildRequires:  pkgconfig(poppler-glib) >= 0.41.0
 BuildRequires:  pkgconfig(portaudiocpp) >= 12
+%if %{with qpdf}
+BuildRequires:  pkgconfig(libqpdf) >= 10.6.0
+%endif
 BuildRequires:  pkgconfig(sndfile) >= 1.0.25
 BuildRequires:  pkgconfig(zlib)
 BuildRequires:  pkgconfig(gtksourceview-4) >= 4.0
@@ -68,11 +74,14 @@ The %{name}-ui package contains a graphical user interface for  %{name}.
 
 %prep
 %autosetup -n %{name}
+#Do not build the wrapper which requires external sources
+sed -i -e 's/if (NOT CMAKE_BUILD_TYPE STREQUAL "Release")/if (0)/' CMakeLists.txt
 
 %build
 %cmake \
         -DDISTRO_CODENAME="Fedora Linux" \
         %{?_gtest: -DENABLE_GTEST=ON} \
+        -DENABLE_QPDF=%{?with_qpdf:ON}%{!?with_qpdf:OFF} \
         -DENABLE_MATHTEX=ON \
         -DGIT_VERSION=%{build_shortcommit} \
         -DMAC_INTEGRATION=OFF
@@ -103,6 +112,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %doc README.md AUTHORS
 %{_bindir}/%{name}-thumbnailer
 %{_bindir}/%{name}
+%{_bindir}/%{name}-wrapper
 %{_datadir}/applications/com.github.%{name}.%{name}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/com.github.%{name}.%{name}.svg
 %{_datadir}/icons/hicolor/scalable/mimetypes/*
