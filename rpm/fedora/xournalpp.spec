@@ -68,6 +68,8 @@ The %{name}-ui package contains a graphical user interface for  %{name}.
 
 %prep
 %autosetup -n %{name}
+# We do not build nor ship the wrapper
+sed -i -e 's/xournalpp-wrapper/xournalpp/' desktop/com.github.xournalpp.xournalpp.desktop.in
 
 %build
 %cmake \
@@ -83,7 +85,10 @@ The %{name}-ui package contains a graphical user interface for  %{name}.
 %install
 %cmake_install
 
-#Remove depreciated key from desktop file
+# We do not use the wrapper
+rm -f %{buildroot}%{_bindir}/%{name}-wrapper
+
+# Remove deprecated key from desktop file
 desktop-file-install \
  --remove-key="Encoding" \
  --set-key="StartupWMClass" \
@@ -104,7 +109,6 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.github.%{n
 %doc README.md AUTHORS
 %{_bindir}/%{name}-thumbnailer
 %{_bindir}/%{name}
-%{_bindir}/%{name}-wrapper
 %{_datadir}/applications/com.github.%{name}.%{name}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/com.github.%{name}.%{name}.svg
 %{_datadir}/icons/hicolor/scalable/mimetypes/*
