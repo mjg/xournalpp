@@ -16,8 +16,6 @@
 #include <string>   // for string
 #include <vector>   // for vector
 
-#include "util/StringUtils.h"  // for StaticStringView
-
 #include "Attribute.h"  // for XMLAttribute
 
 class ProgressListener;
@@ -25,7 +23,7 @@ class OutputStream;
 
 class XmlNode {
 public:
-    XmlNode(StringUtils::StaticStringView tag);
+    XmlNode(const char* tag);
     virtual ~XmlNode() = default;
 
 public:
@@ -50,5 +48,5 @@ protected:
     std::vector<std::unique_ptr<XmlNode>> children{};
     std::vector<std::unique_ptr<XMLAttribute>> attributes{};
 
-    StringUtils::StaticStringView tag;
+    std::string tag;
 };

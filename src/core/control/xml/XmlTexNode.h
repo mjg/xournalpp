@@ -19,7 +19,7 @@ class OutputStream;
 
 class XmlTexNode: public XmlNode {
 public:
-    XmlTexNode(StringUtils::StaticStringView tag, std::string&& binaryData);
+    XmlTexNode(const char* tag, std::string&& binaryData);
     virtual ~XmlTexNode();
 
 public:

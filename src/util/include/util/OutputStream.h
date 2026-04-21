@@ -11,8 +11,7 @@
 
 #pragma once
 
-#include <string>       // for string
-#include <string_view>  // for string_view
+#include <string>  // for string
 
 #include <zlib.h>  // for gzFile
 
@@ -25,7 +24,7 @@ public:
 
 public:
     void write(const char* str);
-    void write(const std::string_view sv);
+    void write(const std::string& str);
 
     virtual void write(const char* data, size_t len) = 0;
     virtual void close() = 0;

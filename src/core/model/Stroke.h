@@ -11,7 +11,6 @@
 
 #pragma once
 
-#include <array>    // for array
 #include <cstddef>  // for size_t
 #include <memory>   // for unique_ptr
 #include <vector>   // for vector
@@ -30,7 +29,6 @@ class ShapeContainer;
 class StrokeTool {
 public:
     enum Value { PEN, ERASER, HIGHLIGHTER };
-    static constexpr std::array<const char*, 3> NAMES = {"pen", "eraser", "highlighter"};
     StrokeTool(Value v): value(v) {}
 
     [[nodiscard]] bool isPressureSensitive() const { return value == PEN; }
@@ -42,24 +40,12 @@ private:
     Value value = PEN;
 };
 
-class StrokeCapStyle {
-public:
-    enum Value {
-        ROUND = 0,
-        BUTT = 1,
-        SQUARE = 2
-    };  // Must match the indices in StrokeView::CAIRO_LINE_CAP
-        // and in EraserHandler::PADDING_COEFFICIENT_CAP
-    static constexpr std::array<const char*, 3> NAMES = {"round", "butt", "square"};
-    StrokeCapStyle(Value v): value(v) {}
-
-    // Implicit conversion to underlying enum type
-    operator const Value&() const { return value; }
-    operator Value&() { return value; }
-
-private:
-    Value value;
-};
+enum StrokeCapStyle {
+    ROUND = 0,
+    BUTT = 1,
+    SQUARE = 2
+};  // Must match the indices in StrokeView::CAIRO_LINE_CAP
+    // and in EraserHandler::PADDING_COEFFICIENT_CAP
 
 class ErasableStroke;
 struct PaddedBox;

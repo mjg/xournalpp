@@ -19,7 +19,7 @@ class OutputStream;
 
 class XmlImageNode: public XmlNode {
 public:
-    XmlImageNode(StringUtils::StaticStringView tag);
+    XmlImageNode(const char* tag);
     virtual ~XmlImageNode();
 
 public:

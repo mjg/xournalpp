@@ -7,7 +7,6 @@
 #include "control/jobs/ProgressListener.h"  // for ProgressListener
 #include "control/xml/Attribute.h"          // for XMLAttribute
 #include "util/OutputStream.h"              // for OutputStream
-#include "util/StringUtils.h"               // for StaticStringView
 
 #include "DoubleArrayAttribute.h"  // for DoubleArrayAttribute
 #include "DoubleAttribute.h"       // for DoubleAttribute
@@ -16,7 +15,7 @@
 #include "TextAttribute.h"         // for TextAttribute
 
 
-XmlNode::XmlNode(StringUtils::StaticStringView tag): tag(tag) {}
+XmlNode::XmlNode(const char* tag): tag(tag) {}
 
 void XmlNode::setAttrib(const char* attrib, const char* value) {
     if (value == nullptr) {

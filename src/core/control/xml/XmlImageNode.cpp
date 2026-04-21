@@ -4,9 +4,8 @@
 
 #include "control/xml/XmlNode.h"  // for XmlNode
 #include "util/OutputStream.h"    // for OutputStream
-#include "util/StringUtils.h"     // for StaticStringView
 
-XmlImageNode::XmlImageNode(StringUtils::StaticStringView tag): XmlNode(tag) {
+XmlImageNode::XmlImageNode(const char* tag): XmlNode(tag) {
     this->img = nullptr;
     this->out = nullptr;
     this->pos = 0;
