@@ -1,7 +1,6 @@
 #include "PageTypeHandler.h"
 
 #include <algorithm>
-#include <string_view>
 #include <utility>
 
 #include "gui/GladeSearchpath.h"
@@ -100,7 +99,7 @@ auto PageTypeHandler::getInfoOn(const PageType& pt) const -> const PageTypeInfo*
     return it == vector.end() ? nullptr : it->get();
 }
 
-auto PageTypeHandler::getPageTypeFormatForString(std::string_view format) -> PageTypeFormat {
+auto PageTypeHandler::getPageTypeFormatForString(const std::string& format) -> PageTypeFormat {
     if (format == "plain") {
         return PageTypeFormat::Plain;
     }
@@ -131,9 +130,9 @@ auto PageTypeHandler::getPageTypeFormatForString(std::string_view format) -> Pag
     if (format == ":image") {
         return PageTypeFormat::Image;
     }
-    g_warning("PageTypeHandler::getPageTypeFormatForString: unknown PageType: \"" SV_FMT "\". Replacing with "
+    g_warning("PageTypeHandler::getPageTypeFormatForString: unknown PageType: \"%s\". Replacing with "
               "PageTypeFormat::Plain",
-              SV_ARG(format));
+              format.c_str());
     return PageTypeFormat::Plain;
 }
 
