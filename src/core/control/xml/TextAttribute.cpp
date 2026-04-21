@@ -6,14 +6,13 @@
 #include "util/OutputStream.h"      // for OutputStream
 #include "util/StringUtils.h"       // for replace_pair, StringUtils
 
-TextAttribute::TextAttribute(std::u8string name, std::u8string value):
+TextAttribute::TextAttribute(std::string name, std::string value):
         XMLAttribute(std::move(name)), value(std::move(value)) {}
 
 TextAttribute::~TextAttribute() = default;
 
 void TextAttribute::writeOut(OutputStream* out) {
-    // Todo: perform entity replacement with utf-8 string, avoiding a copy
-    auto v = std::string{this->value.begin(), this->value.end()};
+    std::string v = this->value;
     StringUtils::replaceAllChars(v, {
                                             replace_pair('&', "&amp;"),
                                             replace_pair('\"', "&quot;"),

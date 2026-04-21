@@ -19,12 +19,12 @@ class OutputStream;
 
 class TextAttribute: public XMLAttribute {
 public:
-    TextAttribute(std::u8string name, std::u8string value);
+    TextAttribute(std::string name, std::string value);
     ~TextAttribute() override;
 
 public:
     void writeOut(OutputStream* out) override;
 
 private:
-    std::u8string value;
+    std::string value;
 };

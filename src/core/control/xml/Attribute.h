@@ -17,14 +17,14 @@ class OutputStream;
 
 class XMLAttribute {
 public:
-    XMLAttribute(std::u8string name);
+    XMLAttribute(std::string name);
     virtual ~XMLAttribute();
 
 public:
     virtual void writeOut(OutputStream* out) = 0;
 
-    std::u8string getName();
+    std::string getName();
 
 private:
-    std::u8string name;
+    std::string name;
 };
