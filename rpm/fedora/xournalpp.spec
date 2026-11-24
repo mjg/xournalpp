@@ -5,12 +5,12 @@
 #This spec file is intended for daily development snapshot release
 %global build_shortcommit {{{ git rev-parse --short HEAD }}}
 %global version_string {{{ git describe --tags --match 'v[0-9]*' | sed -e 's/^v\(.*\)-\([0-9]*\)-g\(.*\)$/\1^\2.g\3/' }}}
-%global _gtest 1
+%bcond gtest 1
 
 Name:           xournalpp
 # See https://docs.fedoraproject.org/en-US/packaging-guidelines/Versioning/#_examples
 Version:        %{version_string}
-Release:        1%{dist}
+Release:        1%{?dist}
 Summary:        Handwriting note-taking software with PDF annotation support
 
 License:        GPLv2+
@@ -27,9 +27,9 @@ BuildRequires:  git
 BuildRequires:  help2man
 BuildRequires:  libappstream-glib
 #This would be the right way to do it xpp downloads from Google nonetheless.
-%{?_gtest:
+%if %{with gtest}
 BuildRequires:  pkgconfig(gtest)
-}
+%endif
 BuildRequires:  pkgconfig(glib-2.0) >= 2.32.0
 BuildRequires:  pkgconfig(gtk+-3.0) >= 3.18.9
 BuildRequires:  pkgconfig(librsvg-2.0)
@@ -49,8 +49,8 @@ Requires:       %{name}-plugins = %{version}-%{release}
 Requires:       %{name}-ui = %{version}-%{release}
 
 %description
-Xournal++ is a handwriting note-taking software with PDF annotation support.
-Supports Pen input like Wacom Tablets
+Xournal++ is a handwriting note-taking application with PDF annotation support.
+It is optimized for pen input such as Wacom tablets.
 
 %package	plugins
 Summary:        Default plugin for %{name}
@@ -76,7 +76,7 @@ sed -i -e 's/xournalpp-wrapper/xournalpp/' desktop/com.github.xournalpp.xournalp
 %cmake \
         -DDISTRO_CODENAME="Fedora Linux" \
         -DENABLE_CPPTRACE=OFF \
-        %{?_gtest: -DENABLE_GTEST=ON} \
+        -DENABLE_GTEST=%{with gtest} \
         -DGIT_VERSION=%{build_shortcommit}
 
 %cmake_build
